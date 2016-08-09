@@ -10,7 +10,7 @@
 
 static const NSInteger kResponseStateInit = 0;
 static const NSInteger kResponseStateSentHeaders = 1;
-static const NSInteger kResponseStateFinished = 2;
+//static const NSInteger kResponseStateFinished = 2;
 
 @implementation GCDResponse {
     BOOL _finished;

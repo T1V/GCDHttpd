@@ -110,7 +110,7 @@
 - (GCDResponse *)responseWithContentLength:(NSInteger)len {
     GCDResponse * response = [[GCDResponse alloc] initWithDelegate:self.httpd socket:self.socket];
     if (len > 0) {
-        [response.headers setObject:[NSString stringWithFormat:@"%d", len] forKey:@"Content-Length"];
+        [response.headers setObject:[NSString stringWithFormat:@"%ld", (long)len] forKey:@"Content-Length"];
     }
     return response;
 }

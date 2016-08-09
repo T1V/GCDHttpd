@@ -28,8 +28,8 @@ static const long kTagReadHeaderLine = 1102;
 
 static const long kTagReadPostContentLength = 1103;
 static const long kTagReadMultipartBoundary = 1104;
-static const long kTagReadMultipartEndTest = 1105;
-static const long kTagReadMultipartHeader = 1106;
+//static const long kTagReadMultipartEndTest = 1105;
+//static const long kTagReadMultipartHeader = 1106;
 
 static const long kTagReadMultipartBody = 1110;
 
@@ -103,7 +103,7 @@ static const long kTagReadMultipartBody = 1110;
 
 - (void)stop {
     if (self.httpdState != kHttpdStateStarted) {
-        NSLog(@"Weird http state %d on httpdState", self.httpdState);
+        NSLog(@"Weird http state %ld on httpdState", (long)self.httpdState);
     }
     [_listenSocket disconnect];
     self.httpdState = kHttpdStateStopped;
@@ -371,10 +371,10 @@ static const long kTagReadMultipartBody = 1110;
     
     GCDRequest * request = (GCDRequest *)response.socket.userData;
     if(request) {
-        for (NSString * name in request.FILES) {
-            GCDFormPart * part = request.FILES[name];
+        //for (NSString * name in request.FILES) {
+            //GCDFormPart * part = request.FILES[name];
             //[part close];
-        }
+        //}
         request.FILES = nil;
     }
 }
@@ -382,7 +382,7 @@ static const long kTagReadMultipartBody = 1110;
 - (void)response:(GCDResponse *)response hasData:(NSData *)data {
     if (response.chunked) {
         NSMutableData * buffer = [[NSMutableData alloc] init];
-        NSString * cntData = [NSString stringWithFormat:@"%X\r\n", data.length];
+        NSString * cntData = [NSString stringWithFormat:@"%lX\r\n", (unsigned long)data.length];
         NSData * cnt = [cntData dataUsingEncoding:NSUTF8StringEncoding];
         [buffer appendData:cnt];
         [buffer appendData:data];
