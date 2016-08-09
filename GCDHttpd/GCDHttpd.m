@@ -37,6 +37,8 @@ static const long kTagReadMultipartBody = 1110;
     GCDAsyncSocket * _listenSocket;
     NSMutableArray * _roles;
     dispatch_queue_t _dispatchQueue;
+
+    GCDAsyncSocket * _newAcceptSocket;
 }
 
 @synthesize netService=_netService;
@@ -139,6 +141,9 @@ static const long kTagReadMultipartBody = 1110;
     request.httpd = self;
     newSocket.userData = request;
     [self socket:newSocket readLineWithTag:kTagReadStatusLine];
+  
+    /* For some reaseon, with newer GCDAsyncSocket implementation, this gets deallocated too soon. I'm not even sure why it works with the old version (included with GCDHttpd), but this is needed to keep the socket around long enough to read any late-coming data */
+    _newAcceptSocket = newSocket;
 }
 
 - (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag {
