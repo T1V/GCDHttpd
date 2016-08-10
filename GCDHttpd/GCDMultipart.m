@@ -51,6 +51,7 @@ static const long kTagMultipartHeader = 1106;
     
     if (fileDescriptor == -1) {
         NSLog(@"Error while creating tmp file");
+        free(tempFileNameCString);
         return nil;
     }
     
@@ -196,27 +197,29 @@ static const long kTagMultipartHeader = 1106;
     _watchLength = length;
 }
 
-- (void)feed:(NSData*)data error:(NSError * __autoreleasing *)perror {
+- (BOOL)feed:(NSData*)data error:(NSError * __autoreleasing *)perror {
     [_buffer appendData:data];
-    *perror = nil;
+    if (perror)
+      *perror = nil;
     NSInteger adv = [self advanceWitherror:perror];
     if (*perror != nil) {
-        return;
+      return NO;
     }
     while (adv > 0 && !self.finished) {
         adv = [self advanceWitherror:perror];
         if (*perror != nil) {
-            return;
+            return NO;
         }
     }
     if (self.finished) {
-        return;
+        return YES;
     }
     
     if (_bufferOffset > 0) {
         [_buffer shiftDataFromIndex:_bufferOffset];
         _bufferOffset = 0;
     }
+    return YES;
 }
 
 - (NSInteger)advanceWitherror:(NSError * __autoreleasing *)perror {
@@ -225,7 +228,8 @@ static const long kTagMultipartHeader = 1106;
         if (_buffer.length >= _watchLength + _bufferOffset) {
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, _watchLength)];
             _bufferOffset += _watchLength;
-            *perror = [self receviedData:data finished:YES tag:_tag];
+            if (perror)
+              *perror = [self receviedData:data finished:YES tag:_tag];
             advancedLength = _watchLength;
         }
     } else if (_watchType == kWatchTypeData) {
@@ -234,7 +238,8 @@ static const long kTagMultipartHeader = 1106;
             advancedLength = index + _watchData.length - _bufferOffset;
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, advancedLength)];            
             _bufferOffset = index + _watchData.length;
-            *perror = [self receviedData:data finished:YES tag:_tag];
+            if (perror)
+              *perror = [self receviedData:data finished:YES tag:_tag];
         }
     } else if (_watchType == kWatchTypeDataOrLength) {
         NSInteger index = [_buffer firstPostionOfData:_watchData offset:_bufferOffset];
@@ -242,11 +247,13 @@ static const long kTagMultipartHeader = 1106;
             advancedLength = index + _watchData.length - _bufferOffset;
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, advancedLength)];
             _bufferOffset = index + _watchData.length;
-            *perror = [self receviedData:data finished:YES tag:_tag];
+            if (perror)
+              *perror = [self receviedData:data finished:YES tag:_tag];
         } else if (_buffer.length >= _watchLength + _bufferOffset + _watchData.length) {
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, _watchLength)];
             _bufferOffset += _watchLength;
-            *perror = [self receviedData:data finished:NO tag:_tag];
+            if (perror)
+              *perror = [self receviedData:data finished:NO tag:_tag];
             advancedLength = _watchLength;
         }
     }
