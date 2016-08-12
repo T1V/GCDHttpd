@@ -202,12 +202,12 @@ static const long kTagMultipartHeader = 1106;
     if (perror)
       *perror = nil;
     NSInteger adv = [self advanceWitherror:perror];
-    if (*perror != nil) {
+    if (perror && *perror != nil) {
       return NO;
     }
     while (adv > 0 && !self.finished) {
         adv = [self advanceWitherror:perror];
-        if (*perror != nil) {
+        if (perror && *perror != nil) {
             return NO;
         }
     }
@@ -257,7 +257,7 @@ static const long kTagMultipartHeader = 1106;
             advancedLength = _watchLength;
         }
     }
-    if (*perror != nil) {
+    if (perror && *perror != nil) {
         return -1;
     }
     return advancedLength;
