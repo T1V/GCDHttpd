@@ -198,16 +198,21 @@ static const long kTagMultipartHeader = 1106;
 }
 
 - (BOOL)feed:(NSData*)data error:(NSError * __autoreleasing *)perror {
+    NSError *error = nil;
     [_buffer appendData:data];
     if (perror)
       *perror = nil;
-    NSInteger adv = [self advanceWitherror:perror];
-    if (perror && *perror != nil) {
+    NSInteger adv = [self advanceWitherror:&error];
+    if (error != nil) {
+      if (perror)
+        *perror = error;
       return NO;
     }
     while (adv > 0 && !self.finished) {
-        adv = [self advanceWitherror:perror];
-        if (perror && *perror != nil) {
+        adv = [self advanceWitherror:&error];
+        if (error != nil) {
+          if (perror)
+            *perror = error;
             return NO;
         }
     }
@@ -223,13 +228,13 @@ static const long kTagMultipartHeader = 1106;
 }
 
 - (NSInteger)advanceWitherror:(NSError * __autoreleasing *)perror {
+    NSError *error = nil;
     NSInteger advancedLength = 0;
     if (_watchType == kWatchTypeLength) {
         if (_buffer.length >= _watchLength + _bufferOffset) {
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, _watchLength)];
             _bufferOffset += _watchLength;
-            if (perror)
-              *perror = [self receviedData:data finished:YES tag:_tag];
+            error = [self receviedData:data finished:YES tag:_tag];
             advancedLength = _watchLength;
         }
     } else if (_watchType == kWatchTypeData) {
@@ -238,8 +243,7 @@ static const long kTagMultipartHeader = 1106;
             advancedLength = index + _watchData.length - _bufferOffset;
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, advancedLength)];            
             _bufferOffset = index + _watchData.length;
-            if (perror)
-              *perror = [self receviedData:data finished:YES tag:_tag];
+            error = [self receviedData:data finished:YES tag:_tag];
         }
     } else if (_watchType == kWatchTypeDataOrLength) {
         NSInteger index = [_buffer firstPostionOfData:_watchData offset:_bufferOffset];
@@ -247,18 +251,18 @@ static const long kTagMultipartHeader = 1106;
             advancedLength = index + _watchData.length - _bufferOffset;
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, advancedLength)];
             _bufferOffset = index + _watchData.length;
-            if (perror)
-              *perror = [self receviedData:data finished:YES tag:_tag];
+            error = [self receviedData:data finished:YES tag:_tag];
         } else if (_buffer.length >= _watchLength + _bufferOffset + _watchData.length) {
             NSData * data = [_buffer subdataWithRange:NSMakeRange(_bufferOffset, _watchLength)];
             _bufferOffset += _watchLength;
-            if (perror)
-              *perror = [self receviedData:data finished:NO tag:_tag];
+            error = [self receviedData:data finished:NO tag:_tag];
             advancedLength = _watchLength;
         }
     }
-    if (perror && *perror != nil) {
-        return -1;
+    if (error != nil) {
+      if (perror)
+        *perror = error;
+      return -1;
     }
     return advancedLength;
 }
